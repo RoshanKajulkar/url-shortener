@@ -5,9 +5,11 @@ import com.example.urlshortener.repository.UrlRepository;
 import com.example.urlshortener.util.Base62Util;
 import org.springframework.stereotype.Service;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.LocalDateTime;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UrlService {
@@ -16,6 +18,9 @@ public class UrlService {
 
     private final UrlRepository urlRepository;
     private final Random random = new Random();
+
+    @Value("${cache.ttl.seconds}")
+    private long cacheTtl;
 
     public UrlService(UrlRepository urlRepository, StringRedisTemplate redisTemplate) {
         this.urlRepository = urlRepository;
@@ -61,7 +66,7 @@ public class UrlService {
                     );
                     urlRepository.save(url);
 
-                    redisTemplate.opsForValue().set(code, url.getOriginalUrl());
+                    redisTemplate.opsForValue().set(code, url.getOriginalUrl(), cacheTtl, TimeUnit.SECONDS);
 
                     return url.getOriginalUrl();
                 })
