@@ -4,6 +4,7 @@ import com.example.urlshortener.model.Url;
 import com.example.urlshortener.repository.UrlRepository;
 import com.example.urlshortener.util.Base62Util;
 import org.springframework.stereotype.Service;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Random;
@@ -11,11 +12,14 @@ import java.util.Random;
 @Service
 public class UrlService {
 
+    private final StringRedisTemplate redisTemplate;
+
     private final UrlRepository urlRepository;
     private final Random random = new Random();
 
-    public UrlService(UrlRepository urlRepository) {
+    public UrlService(UrlRepository urlRepository, StringRedisTemplate redisTemplate) {
         this.urlRepository = urlRepository;
+        this.redisTemplate = redisTemplate;
     }
 
     public String createShortUrl(String originalUrl) {
@@ -45,12 +49,19 @@ public class UrlService {
 
     public String getOriginalUrl(String code) {
 
+        String cached = redisTemplate.opsForValue().get(code);
+        if (cached != null) {
+            return cached;
+        }
+
         return urlRepository.findByShortCode(code)
                 .map(url -> {
                     url.setClickCount(
                             url.getClickCount() == null ? 1 : url.getClickCount() + 1
                     );
                     urlRepository.save(url);
+
+                    redisTemplate.opsForValue().set(code, url.getOriginalUrl());
 
                     return url.getOriginalUrl();
                 })
