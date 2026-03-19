@@ -1,5 +1,6 @@
 package com.example.urlshortener.service;
 
+import com.example.urlshortener.util.Base62Util;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -10,9 +11,11 @@ import java.util.UUID;
 public class UrlService {
 
     private final Map<String, String> store = new HashMap<>();
+    private long counter = 1;
 
     public String createShortUrl(String originalUrl) {
-        String code = UUID.randomUUID().toString().substring(0, 6);
+        String code = Base62Util.encode(counter);
+        counter++;
 
         store.put(code, originalUrl);
 
