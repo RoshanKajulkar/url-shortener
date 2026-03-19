@@ -18,4 +18,8 @@ public class UrlService {
 
         return code;
     }
+
+    public String getOriginalUrl(String code) {
+        return store.get(code);
+    }
 }
