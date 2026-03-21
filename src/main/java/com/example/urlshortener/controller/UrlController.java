@@ -1,5 +1,6 @@
 package com.example.urlshortener.controller;
 
+import com.example.urlshortener.dto.ShortenRequest;
 import com.example.urlshortener.service.UrlService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
@@ -7,8 +8,12 @@ import org.springframework.http.ResponseEntity;
 import io.github.bucket4j.Bucket;
 import com.example.urlshortener.config.RateLimiter;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.Map;
 
+@Tag(name = "URL Shortener", description = "APIs for URL shortening service")
 @RestController
 @RequestMapping("/api")
 public class UrlController {
@@ -21,9 +26,9 @@ public class UrlController {
         this.rateLimiter = rateLimiter;
     }
 
+    @Operation(summary = "Create a short URL")
     @PostMapping("/shorten")
-
-    public ResponseEntity<?> shorten(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> shorten(@RequestBody ShortenRequest request, HttpServletRequest httpRequest) {
 
         String ip = httpRequest.getRemoteAddr();
 
@@ -34,7 +39,7 @@ public class UrlController {
                     .body(Map.of("error", "Too many requests"));
         }
 
-        String url = request.get("url");
+        String url = request.getUrl();
 
         if (url == null || url.isBlank()) {
             return ResponseEntity.badRequest()
